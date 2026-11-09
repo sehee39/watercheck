@@ -155,7 +155,7 @@ if submitted:
 
             header = result.get("response", {}).get("header", {})
             body = result.get("response", {}).get("body", {})
-
+            st.write("전체 측정 데이터 수:", body.get("totalCount"))
             if header.get("resultCode") != "00":
                 st.error(
                     "API 오류: " +
