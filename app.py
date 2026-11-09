@@ -26,7 +26,100 @@ st.write(
 )
 
 st.divider()
+# ---------------------------------
+# 정수장 목록 전체 수집
+# ---------------------------------
 
+@st.cache_data(ttl=3600)
+def load_facilities(service_key, target_date):
+
+    all_records = []
+
+    base_params = {
+        "serviceKey": service_key,
+        "stDt": target_date.strftime("%Y-%m-%d"),
+        "stTm": "00",
+        "edDt": target_date.strftime("%Y-%m-%d"),
+        "edTm": "24",
+        "numOfRows": 100,
+        "_type": "json"
+    }
+
+    # 첫 페이지 조회
+    params = base_params.copy()
+    params["pageNo"] = 1
+
+    response = requests.get(
+        API_URL,
+        params=params,
+        timeout=60
+    )
+
+    response.raise_for_status()
+
+    result = response.json()
+    body = result.get("response", {}).get("body", {})
+
+    total_count = int(body.get("totalCount", 0))
+    total_pages = (total_count + 99) // 100
+
+    # 전체 페이지 조회
+    for page_no in range(1, total_pages + 1):
+
+        params = base_params.copy()
+        params["pageNo"] = page_no
+
+        response = requests.get(
+            API_URL,
+            params=params,
+            timeout=60
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        body = result.get("response", {}).get("body", {})
+        items = body.get("items", {})
+
+        if not items:
+            continue
+
+        records = items.get("item", [])
+
+        if isinstance(records, dict):
+            records = [records]
+
+        all_records.extend(records)
+
+    facility_df = pd.DataFrame(all_records)
+
+    # 정수장별 중복 제거
+    facility_df = facility_df.drop_duplicates(
+        subset=["fcltyMngNo"]
+    )
+
+    return facility_df
+
+
+try:
+    service_key = st.secrets["SERVICE_KEY"]
+
+    with st.spinner("전체 정수장 목록을 수집하는 중입니다..."):
+
+        facility_df = load_facilities(
+            service_key,
+            date.today()
+        )
+
+    st.success(
+        f"전체 조회 데이터에서 "
+        f"{len(facility_df)}곳의 정수장을 확인했습니다."
+    )
+
+except Exception as e:
+    facility_df = pd.DataFrame()
+    st.warning(f"정수장 목록을 불러오지 못했습니다: {e}")
 # ---------------------------------
 # 2. 조회 조건 입력
 # ---------------------------------
