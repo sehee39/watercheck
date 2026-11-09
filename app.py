@@ -165,6 +165,10 @@ try:
     facility_df["시·군·구"] = (
         facility_df["fcltyAddr"].apply(extract_city)
     )
+    # 주소와 지역 정보가 확인되는 정수장만 사용
+    facility_df = facility_df.dropna(
+        subset=["시·도", "시·군·구"]
+    ).reset_index(drop=True)
     st.header("조회 가능한 지역 및 정수장")
 
     st.dataframe(
@@ -183,31 +187,73 @@ except Exception as e:
     facility_df = pd.DataFrame()
     st.warning(f"정수장 목록을 불러오지 못했습니다: {e}")
 # ---------------------------------
-# 2. 조회 조건 입력
 # ---------------------------------
+# 2. 지역 및 조회 조건 선택
+# ---------------------------------
+
+if facility_df.empty:
+    st.error("조회 가능한 정수장 목록이 없습니다.")
+    st.stop()
 
 st.header("1. 수질 데이터 조회")
 
+# 시·도 선택
+province_options = sorted(
+    facility_df["시·도"].unique().tolist()
+)
+
+selected_province = st.selectbox(
+    "시·도 선택",
+    province_options
+)
+
+# 선택한 시·도에 속한 시·군·구만 추출
+province_df = facility_df[
+    facility_df["시·도"] == selected_province
+]
+
+county_options = sorted(
+    province_df["시·군·구"].unique().tolist()
+)
+
+selected_county = st.selectbox(
+    "시·군·구 선택",
+    county_options
+)
+
+# 선택한 시·군·구에 속한 정수장만 추출
+county_df = province_df[
+    province_df["시·군·구"] == selected_county
+]
+
+facility_options = county_df.index.tolist()
+
+selected_facility_index = st.selectbox(
+    "정수장 선택",
+    facility_options,
+    format_func=lambda idx: (
+        f"{facility_df.loc[idx, 'fcltyMngNm']} "
+        f"({facility_df.loc[idx, 'fcltyAddr']})"
+    )
+)
+
+# 선택한 정수장의 API 정보 저장
+selected_facility = facility_df.loc[
+    selected_facility_index
+]
+
+st.caption(
+    f"선택한 정수장: {selected_facility['fcltyMngNm']}"
+)
+
+st.divider()
+
+# 조회 날짜 및 시간 설정
 with st.form("search_form"):
 
     col1, col2 = st.columns(2)
 
     with col1:
-        facility_no = st.text_input(
-            "시설관리번호",
-            value="4824012333"
-        )
-
-        business_code = st.text_input(
-            "사업장코드",
-            value="333"
-        )
-
-        water_type = st.text_input(
-            "생활공업구분",
-            value="1"
-        )
-
         start_date = st.date_input(
             "조회 시작일자",
             value=date.today()
@@ -231,18 +277,18 @@ with st.form("search_form"):
             index=18
         )
 
-        rows = st.selectbox(
-            "한 번에 조회할 데이터 수",
-            [10, 20, 50, 100],
-            index=2
-        )
+    rows = st.selectbox(
+        "한 번에 조회할 데이터 수",
+        [10, 20, 50, 100],
+        index=2
+    )
 
-        page = st.number_input(
-            "페이지 번호",
-            min_value=1,
-            value=1,
-            step=1
-        )
+    page = st.number_input(
+        "페이지 번호",
+        min_value=1,
+        value=1,
+        step=1
+    )
 
     submitted = st.form_submit_button(
         "수질 데이터 조회",
@@ -285,15 +331,20 @@ if submitted:
             "_type": "json"
         }
 
-        # 선택 입력값이 있을 때만 추가
-        if facility_no.strip():
-            params["fcltyMngNo"] = facility_no.strip()
+        # 선택한 정수장의 정보를 API에 자동 전달
+        params["fcltyMngNo"] = str(
+            selected_facility["fcltyMngNo"]
+        ).strip()
 
-        if business_code.strip():
-            params["sujCode"] = business_code.strip()
+        if pd.notna(selected_facility.get("sujCode")):
+            params["sujCode"] = str(
+                selected_facility["sujCode"]
+            ).strip()
 
-        if water_type.strip():
-            params["lilndDiv"] = water_type.strip()
+        if pd.notna(selected_facility.get("lilndDiv")):
+            params["lilndDiv"] = str(
+                selected_facility["lilndDiv"]
+            ).strip()
 
         try:
             with st.spinner("수질 데이터를 불러오는 중입니다..."):
@@ -387,11 +438,11 @@ if submitted:
                 if col in df.columns
             ]
 
-            facility_df = df[facility_columns].drop_duplicates()
+            result_facility_df = df[facility_columns].drop_duplicates()
 
-            st.write(f"고유 정수장 수: {len(facility_df)}곳")
+            st.write(f"고유 정수장 수: {len(result_facility_df)}곳")
             st.dataframe(
-                facility_df,
+                result_facility_df,
                 use_container_width=True,
                 hide_index=True
             )
