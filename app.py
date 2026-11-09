@@ -111,7 +111,69 @@ try:
             service_key,
             date.today()
         )
+    # 정수장 주소를 시·도와 시·군·구로 분류
 
+    province_map = {
+        "11": "서울특별시",
+        "26": "부산광역시",
+        "27": "대구광역시",
+        "28": "인천광역시",
+        "29": "광주광역시",
+        "30": "대전광역시",
+        "31": "울산광역시",
+        "36": "세종특별자치시",
+        "41": "경기도",
+        "42": "강원특별자치도",
+        "43": "충청북도",
+        "44": "충청남도",
+        "45": "전북특별자치도",
+        "46": "전라남도",
+        "47": "경상북도",
+        "48": "경상남도",
+        "50": "제주특별자치도"
+    }
+
+    province_names = [
+        "서울특별시", "부산광역시", "대구광역시",
+        "인천광역시", "광주광역시", "대전광역시",
+        "울산광역시", "세종특별자치시",
+        "경기도", "강원도", "강원특별자치도",
+        "충북", "충청북도", "충남", "충청남도",
+        "전북", "전북특별자치도", "전남", "전라남도",
+        "경북", "경상북도", "경남", "경상남도",
+        "제주특별자치도"
+    ]
+
+    def extract_city(address):
+        parts = str(address).split()
+
+        if not parts:
+            return "주소 정보 없음"
+
+        if parts[0] in province_names:
+            return parts[1] if len(parts) > 1 else "정보 없음"
+
+        return parts[0]
+
+    facility_df["시·도"] = (
+        facility_df["fcltyMngNo"]
+        .astype(str)
+        .str[:2]
+        .map(province_map)
+    )
+
+    facility_df["시·군·구"] = (
+        facility_df["fcltyAddr"].apply(extract_city)
+    )
+    st.header("조회 가능한 지역 및 정수장")
+
+    st.dataframe(
+        facility_df[
+            ["시·도", "시·군·구", "fcltyMngNm", "fcltyAddr"]
+        ].drop_duplicates(),
+        use_container_width=True,
+        hide_index=True
+    )
     st.success(
         f"전체 조회 데이터에서 "
         f"{len(facility_df)}곳의 정수장을 확인했습니다."
