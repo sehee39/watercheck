@@ -218,7 +218,28 @@ if submitted:
                 "clUnit": "잔류염소 단위",
                 "tbUnit": "탁도 단위"
             })
+            # 고유 정수장 목록 확인
+            st.header("조회 가능한 정수장 확인")
 
+            facility_columns = [
+                col for col in [
+                    "fcltyMngNo",
+                    "sujCode",
+                    "lilndDiv",
+                    "정수장",
+                    "주소"
+                ]
+                if col in df.columns
+            ]
+
+            facility_df = df[facility_columns].drop_duplicates()
+
+            st.write(f"고유 정수장 수: {len(facility_df)}곳")
+            st.dataframe(
+                facility_df,
+                use_container_width=True,
+                hide_index=True
+            )
             # ---------------------------------
             # 5. 조회 결과 출력
             # ---------------------------------
