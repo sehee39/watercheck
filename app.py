@@ -257,7 +257,58 @@ if submitted:
                 use_container_width=True,
                 hide_index=True
             )
+st.header("3. 먹는물 수질기준 비교")
 
+# 가장 최근 측정값 가져오기
+latest = df.iloc[-1]
+
+# 측정값과 기준 비교
+def check_standard(value, low=None, high=None):
+    if pd.isna(value):
+        return "측정값 없음"
+
+    if low is not None and value < low:
+        return "기준 범위 벗어남"
+
+    if high is not None and value > high:
+        return "기준 범위 벗어남"
+
+    return "기준 범위 내"
+
+comparison = [
+    {
+        "항목": "pH",
+        "최신 측정값": round(latest["pH"], 4),
+        "수질기준": "5.8 ~ 8.5",
+        "판정": check_standard(latest["pH"], 5.8, 8.5)
+    },
+    {
+        "항목": "잔류염소 (mg/L)",
+        "최신 측정값": round(latest["잔류염소"], 4),
+        "수질기준": "4.0 이하",
+        "판정": check_standard(latest["잔류염소"], high=4.0)
+    },
+    {
+        "항목": "탁도 (NTU)",
+        "최신 측정값": round(latest["탁도"], 4),
+        "수질기준": "0.5 이하",
+        "판정": check_standard(latest["탁도"], high=0.5)
+    }
+]
+
+comparison_df = pd.DataFrame(comparison)
+
+st.dataframe(
+    comparison_df,
+    use_container_width=True,
+    hide_index=True
+)
+
+st.caption(
+    "※ 가장 최근 측정값을 기준과 비교한 참고 결과입니다. "
+    "정수장 측정값만으로 가정 수도꼭지의 수질이나 "
+    "전체 음용 안전성을 판정할 수 없습니다."
+)
             # ---------------------------------
             # 6. 통계 분석
             # ---------------------------------
