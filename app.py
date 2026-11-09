@@ -252,18 +252,15 @@ if submitted:
             if "주소" in df.columns:
                 display_columns.insert(2, "주소")
 
-            st.dataframe(
-                df[display_columns],
-                use_container_width=True,
-                hide_index=True
-            )
+
+            # ---------------------------------
+            # 6. 수질기준 비교
+            # ---------------------------------
 
             st.header("3. 먹는물 수질기준 비교")
 
-            # 가장 최근 측정값 가져오기
             latest = df.iloc[-1]
 
-            # 측정값과 기준 비교
             def check_standard(value, low=None, high=None):
                 if pd.isna(value):
                     return "측정값 없음"
@@ -276,22 +273,27 @@ if submitted:
 
                 return "기준 범위 내"
 
+            def format_value(value):
+                if pd.isna(value):
+                    return "측정값 없음"
+                return round(float(value), 4)
+
             comparison = [
                 {
                     "항목": "pH",
-                    "최신 측정값": round(latest["pH"], 4),
+                    "최신 측정값": format_value(latest["pH"]),
                     "수질기준": "5.8 ~ 8.5",
                     "판정": check_standard(latest["pH"], 5.8, 8.5)
                 },
                 {
                     "항목": "잔류염소 (mg/L)",
-                    "최신 측정값": round(latest["잔류염소"], 4),
+                    "최신 측정값": format_value(latest["잔류염소"]),
                     "수질기준": "4.0 이하",
                     "판정": check_standard(latest["잔류염소"], high=4.0)
                 },
                 {
                     "항목": "탁도 (NTU)",
-                    "최신 측정값": round(latest["탁도"], 4),
+                    "최신 측정값": format_value(latest["탁도"]),
                     "수질기준": "0.5 이하",
                     "판정": check_standard(latest["탁도"], high=0.5)
                 }
@@ -306,16 +308,17 @@ if submitted:
             )
 
             st.caption(
-                "※ 최신 정수장 측정값과 먹는물 수질기준을 비교한 참고 결과입니다. "
-                "정수장 측정값만으로 가정 수도꼭지의 수질이나 "
-                "전체 음용 안전성을 판정할 수 없습니다."
+                "※ 정수장 측정값과 먹는물 수질기준을 비교한 참고 결과입니다. "
+                "이 비교만으로 가정 수도꼭지의 수질이나 음용 안전성을 "
+                "판정할 수 없습니다."
             )
+
 
             # ---------------------------------
             # 6. 통계 분석
             # ---------------------------------
 
-            st.header("3. 수질 데이터 통계")
+            st.header("4. 수질 데이터 통계")
 
             metric_columns = [
                 ("pH", "pH"),
@@ -349,7 +352,7 @@ if submitted:
             # 7. 수질 변화 그래프
             # ---------------------------------
 
-            st.header("4. 시간별 수질 변화")
+            st.header("5. 시간별 수질 변화")
 
             selected = st.selectbox(
                 "그래프로 확인할 수질 항목",
@@ -390,7 +393,7 @@ if submitted:
             # 8. 화학적 원리 설명
             # ---------------------------------
 
-            st.header("5. 수질 항목의 화학적 원리")
+            st.header("6. 수질 항목의 화학적 원리")
 
             explanations = {
                 "pH": (
