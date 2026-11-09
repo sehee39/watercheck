@@ -542,7 +542,86 @@ if submitted:
                 "이 비교만으로 가정 수도꼭지의 수질이나 음용 안전성을 "
                 "판정할 수 없습니다."
             )
+            # ---------------------------------
+            # 수질 분석 결과 해설
+            # ---------------------------------
 
+            st.header("4. 수질 분석 결과 해설")
+
+            explanations = []
+
+            # pH 해설
+            ph = latest["pH"]
+
+            if pd.isna(ph):
+                explanations.append(
+                    "pH: 측정값이 없어 산성도와 알칼리성을 "
+                    "해석할 수 없습니다."
+                )
+            elif ph < 5.8:
+                explanations.append(
+                    f"pH는 {ph:.2f}로 기준 범위보다 낮습니다. "
+                    "물의 산성도가 기준 범위보다 높은 상태입니다."
+                )
+            elif ph > 8.5:
+                explanations.append(
+                    f"pH는 {ph:.2f}로 기준 범위보다 높습니다. "
+                    "물의 알칼리성이 기준 범위보다 높은 상태입니다."
+                )
+            else:
+                explanations.append(
+                    f"pH는 {ph:.2f}로 기준 범위인 5.8~8.5에 "
+                    "포함됩니다."
+                )
+
+            # 잔류염소 해설
+            chlorine = latest["잔류염소"]
+
+            if pd.isna(chlorine):
+                explanations.append(
+                    "잔류염소: 측정값이 없어 해석할 수 없습니다."
+                )
+            elif chlorine > 4.0:
+                explanations.append(
+                    f"잔류염소는 {chlorine:.2f} mg/L로 "
+                    "제시한 기준인 4.0 mg/L를 초과합니다."
+                )
+            else:
+                explanations.append(
+                    f"잔류염소는 {chlorine:.2f} mg/L로 "
+                    "제시한 기준인 4.0 mg/L 이하입니다. "
+                    "잔류염소는 물의 소독 상태와 관련된 지표입니다."
+                )
+
+            # 탁도 해설
+            turbidity = latest["탁도"]
+
+            if pd.isna(turbidity):
+                explanations.append(
+                    "탁도: 측정값이 없어 해석할 수 없습니다."
+                )
+            elif turbidity > 0.5:
+                explanations.append(
+                    f"탁도는 {turbidity:.2f} NTU로 "
+                    "제시한 기준인 0.5 NTU를 초과합니다. "
+                    "물속 부유 입자에 의한 빛의 산란 정도가 "
+                    "기준보다 높은 상태입니다."
+                )
+            else:
+                explanations.append(
+                    f"탁도는 {turbidity:.2f} NTU로 "
+                    "제시한 기준인 0.5 NTU 이하입니다."
+                )
+
+            for explanation in explanations:
+                st.write("• " + explanation)
+
+            st.info(
+                "종합 해설: 조회한 세 가지 수질 항목을 "
+                "각각의 기준과 비교한 결과입니다. "
+                "이 결과는 일부 항목에 대한 참고 정보이며, "
+                "전체 수질이나 음용 안전성을 보장하지 않습니다."
+            )
 
             # ---------------------------------
             # 6. 통계 분석
