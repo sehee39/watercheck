@@ -251,8 +251,11 @@ if submitted:
 
             if "주소" in df.columns:
                 display_columns.insert(2, "주소")
-
-
+            st.dataframe(
+                df[display_columns],
+                use_container_width=True,
+                hide_index=True
+            )
             # ---------------------------------
             # 6. 수질기준 비교
             # ---------------------------------
